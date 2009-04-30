@@ -3,7 +3,7 @@
       <%= link_to('#' + issue.id.to_s, :controller => 'issues', :action => 'show', :id => issue) %>
       - <%= h(issue.project.name) %> -
       <%= link_to(h(issue.subject), :controller => 'issues', :action => 'show', :id => issue) %>
-      (<%= h issue.status.name %>)
+      (<%= h issue.tracker.name %> / <%= h issue.status.name %>)
    </div>
 
    <div class="estimate"><%= h issue.estimated_hours %> &nbsp;</div>
