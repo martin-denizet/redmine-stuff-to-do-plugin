@@ -1,0 +1,16 @@
+nl:
+  stuff_to_do_title: Takenlijst
+  stuff_to_do_what_im_doing_now: "Wat ik nu aan het doen ben"
+  stuff_to_do_what_is_recommended: "Wat ik straks doe"
+  stuff_to_do_what_is_available: "Wat is beschikbaar"
+  stuff_to_do_text_order_im_doing_it: "In de volgorde waarin ik het doe"
+  stuff_to_do_text_by_project_manager: Door de projectmanager
+  stuff_to_do_label_view_user_list: "Bekijk de lijst van een andere user:"
+  stuff_to_do_text_total_progress: "Totale voortgang"
+  stuff_to_do_text_total_estimates: "Totale inschattingen"
+  stuff_to_do_label_project_manager_emails: Project Manager Emails
+  stuff_to_do_label_threshold: Drempel
+  stuff_to_do_label_email_to: Email addressen
+  stuff_to_do_text_settings: "Er wordt een email verzonden naar de projectmanager wanneer een gebruikers takenlijst kleiner wordt dan de drempel. U kan meerdere adressen opgeven, gescheiden door komma's."
+  stuff_to_do_label_filter: Filter
+  stuff_to_do_label_filter_by: Filter op ...
