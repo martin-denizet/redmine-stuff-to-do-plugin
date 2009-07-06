@@ -1,26 +1,25 @@
 # Mocha mocks
 
 Before do
-  # I hate database tests....
   User.destroy_all
   Project.destroy_all
   Enumeration.destroy_all
   IssueStatus.destroy_all
-  NextIssue.destroy_all
+  StuffToDo.destroy_all
   Issue.destroy_all
-  @current_user = User.new(:mail => 'test@example.com', :firstname => 'Feature', :lastname => 'Test')
-  @current_user.login = 'feature_test'
-  @current_user.save!
+  Tracker.destroy_all
+  Setting.stubs(:plugin_stuff_to_do_plugin).returns({'use_as_stuff_to_do' => StuffToDo::USE['All']})
+
+  @current_user = User.make
+
+  @project = Project.make
+  @low_priority = Enumeration.make(:name => 'Low')
   
-  @project = Project.create!({ :identifier => 'test-project', :name => 'Test Project'})
-  @low_priority = Enumeration.create!(:opt => 'IPRI', :name => 'Low')
-  @new_status = IssueStatus.create!(:name => 'New', :is_closed => false)
+  @tracker = make_tracker_for_project(@project)
 end
 
 Given /^there is another user named (\w+)$/ do |name|
-  @other_user = User.new(:mail => "#{name.downcase}@example.com", :firstname => name, :lastname => 'Test')
-  @other_user.login = name
-  @other_user.save!
+  @other_user = User.make(:firstname => name, :lastname => 'Test', :login => name)
 end
 
 Given /^I am logged in$/ do
@@ -47,22 +46,40 @@ Given /^I am on the stuff to do page for (\w+)$/ do |user_name|
   visit "/stuff_to_do", :get, :user_id => user.id
 end
 
-Given /^there are (\d+) next issues$/ do |number|
+Given /^there are (\d+) issues to do$/ do |number|
   number.to_i.times do |n|
-    issue = Issue.new(:project => @project, :subject => "Issue #{number}", :description => "Description #{number}", :priority => @low_priority, :status => @new_status, :assigned_to => @current_user, :done_ratio => 50, :estimated_hours => 3)
-    issue.save false # Skip all the extra associations Redmine uses
-    NextIssue.create! :user => @current_user, :issue => issue
+    issue = Issue.make(:project => @project,
+                       :tracker => @tracker,
+                       :subject => "Issue #{number}",
+                       :description => "Description #{number}",
+                       :done_ratio => 50,
+                       :estimated_hours => 3)
+    StuffToDo.make :user => @current_user, :stuff => issue
   end
 end
 
-Given /^there are (\d+) next issues for (\w+)/ do |number, user_name|
+Given /^there are (\d+) projects to do$/ do |number|
+  number.to_i.times do |n|
+    project = Project.make
+    Member.make(:user => @current_user, :project => project)
+    StuffToDo.make :user => @current_user, :stuff => project
+  end
+end
+
+Given /^there are (\d+) issues to do for (\w+)/ do |number, user_name|
   user = User.find_by_login(user_name)
   user.should_not be_nil
 
   number.to_i.times do |n|
-    issue = Issue.new(:project => @project, :subject => "Issue #{number}", :description => "Description #{number}", :priority => @low_priority, :status => @new_status, :assigned_to => user)
-    issue.save false # Skip all the extra associations Redmine uses
-    NextIssue.create! :user => user, :issue => issue
+    issue = Issue.make(:project => @project,
+                       :tracker => @tracker,
+                       :subject => "Issue #{number}",
+                       :description => "Description #{number}",
+                       :done_ratio => 50,
+                       :estimated_hours => 3,
+                       :assigned_to => user,
+                       :author => user)
+    StuffToDo.make :user => user, :stuff => issue
   end
 end
 
@@ -74,15 +91,24 @@ Given /^there are (\d+) issues assigned to (\w+)$/ do |number, user_name|
   end
 
   number.to_i.times do |n|
-    issue = Issue.new(:project => @project, :subject => "Issue #{number}", :description => "Description #{number}", :priority => @low_priority, :status => @new_status, :assigned_to => user, :estimated_hours => 1)
-    issue.save false # Skip all the extra associations Redmine uses
+    issue = Issue.make(:project => @project,
+                       :tracker => @tracker,
+                       :subject => "Issue #{number}",
+                       :description => "Description #{number}",
+                       :estimated_hours => 1,
+                       :assigned_to => user,
+                       :author => user)
   end
 end
 
 Given /^there are (\d+) issues not assigned to (\w+)$/ do |number, user_name|
   number.to_i.times do |n|
-    issue = Issue.new(:project => @project, :subject => "Issue #{number}", :description => "Description #{number}", :priority => @low_priority, :status => @new_status, :assigned_to => nil)
-    issue.save false # Skip all the extra associations Redmine uses
+    issue = Issue.make(:project => @project,
+                       :tracker => @tracker,
+                       :subject => "Issue #{number}",
+                       :description => "Description #{number}",
+                       :done_ratio => 50,
+                       :estimated_hours => 3)
   end
 end
 
@@ -103,7 +129,7 @@ end
 
 Then /^I should see a row for (\d+) "(.*)" tasks$/ do |number, named|
   response.should have_tag("ol##{named}") do
-    with_tag("li.issue", :minimum => number.to_i, :maximum => number.to_i)
+    with_tag("li.stuff-to-do-item", :minimum => number.to_i, :maximum => number.to_i)
   end
 end
 
@@ -125,7 +151,13 @@ end
 
 Then /^"(\w+)" should be an option group in the select field "(\w+)"$/ do |option_value, field|
   response.should have_tag("select##{field}") do
-    with_tag("optgroup", :label => /#{option_value}/)
+    with_tag("optgroup[label*=?]",option_value)
+  end
+end
+
+Then /^"(\w+)" should be an option in the select field "(\w+)"$/ do |option_value, field|
+  response.should have_tag("select##{field}") do
+    with_tag("option",option_value)
   end
 end
 

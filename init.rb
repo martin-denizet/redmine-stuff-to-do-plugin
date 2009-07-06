@@ -7,6 +7,17 @@ Dir[File.join(directory,'vendor','plugins','*')].each do |dir|
   Dependencies.load_once_paths.delete(path)
 end
 
+# Patches to Ruby, oh my
+require 'stuff_to_do_array_patch'
+
+# Patches to the Redmine core.
+require 'dispatcher'
+
+Dispatcher.to_prepare do
+  require_dependency 'project'
+  Project.send(:include, StuffToDoProjectPatch)
+end
+
 require_dependency 'stuff_to_do_issue_patch.rb'
 
 Redmine::Plugin.register :stuff_to_do_plugin do
@@ -15,11 +26,16 @@ Redmine::Plugin.register :stuff_to_do_plugin do
   url 'https://projects.littlestreamsoftware.com/projects/show/redmine-stuff-to-do'
   author_url 'http://www.littlestreamsoftware.com'
   description "The Stuff To Do plugin allows a user to order and prioritize the issues they are doing into a specific order. It will also allow other privilged users to reorder the user's workload."
-  version '0.2.0'
+  version '0.3.0'
 
   requires_redmine :version_or_higher => '0.8.0'
 
-  settings :default => {'threshold' => '1', 'email_to' => 'example1@example.com,example2@example.com'}, :partial => 'settings/stuff_to_do_settings'
+  settings(:partial => 'settings/stuff_to_do_settings',
+           :default => {
+             'use_as_stuff_to_do' => '0',
+             'threshold' => '1',
+             'email_to' => 'example1@example.com,example2@example.com'
+           })
 
   menu(:top_menu, :stuff_to_do, {:controller => "stuff_to_do", :action => 'index'}, :caption => :stuff_to_do_title, :if => Proc.new{ User.current.logged? })
 

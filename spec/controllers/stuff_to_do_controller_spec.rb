@@ -2,9 +2,10 @@ require File.dirname(__FILE__) + '/../spec_helper'
 
 describe StuffToDoController, '#index' do
   before(:each) do
-    @current_user = mock_model(User, :admin? => false, :logged? => true)
+    @current_user = mock_model(User, :admin? => false, :logged? => true, :language => :en, :memberships => [])
     User.stub!(:current).and_return(@current_user)
-    NextIssue.stub!(:available)
+    StuffToDo.stub!(:available)
+    StuffToDo.stub!(:using_issues_as_items?).and_return(true)
   end
   
   it 'should be successful' do
@@ -20,7 +21,7 @@ describe StuffToDoController, '#index' do
   it 'should set @doing_now to the top 5 issues for the current user' do
     stuff = []
     5.times { stuff << mock('stuff') }
-    NextIssue.should_receive(:doing_now).with(@current_user).and_return(stuff)
+    StuffToDo.should_receive(:doing_now).with(@current_user).and_return(stuff)
     get :index
     assigns[:doing_now].should have(5).things
   end
@@ -28,7 +29,7 @@ describe StuffToDoController, '#index' do
   it 'should set @recommended to the next 10 issues for the current user' do
     stuff = []
     10.times { stuff << mock('stuff') }
-    NextIssue.should_receive(:recommended).with(@current_user).and_return(stuff)
+    StuffToDo.should_receive(:recommended).with(@current_user).and_return(stuff)
     get :index
     assigns[:recommended].should have(10).things
   end
@@ -36,7 +37,7 @@ describe StuffToDoController, '#index' do
   it 'should set @available to the assigned issues that are not next issues for the current user' do
     stuff = []
     6.times { stuff << mock('stuff') }
-    NextIssue.should_receive(:available).with(@current_user, { :user => @current_user }).and_return(stuff)
+    StuffToDo.should_receive(:available).with(@current_user, { :user => @current_user }).and_return(stuff)
     get :index
     assigns[:available].should have(6).things
   end
@@ -58,11 +59,13 @@ describe StuffToDoController, '#index for another user as an administrator' do
   end
   
   before(:each) do
-    @current_user = mock_model(User, :admin? => true, :logged? => true)
+    @current_user = mock_model(User, :admin? => true, :logged? => true, :language => :en)
     User.stub!(:current).and_return(@current_user)
+    controller.stub!(:find_current_user).and_return(@current_user)
     @viewed_user = mock_model(User)
     User.stub!(:find).with(@viewed_user.id.to_s).and_return(@viewed_user)
-    NextIssue.stub!(:available)
+    StuffToDo.stub!(:available)
+    StuffToDo.stub!(:using_issues_as_items?).and_return(true)
   end
   
   it 'should be successful' do
@@ -78,7 +81,7 @@ describe StuffToDoController, '#index for another user as an administrator' do
   it 'should set @doing_now to the top 5 issues for the current user' do
     stuff = []
     5.times { stuff << mock('stuff') }
-    NextIssue.should_receive(:doing_now).with(@viewed_user).and_return(stuff)
+    StuffToDo.should_receive(:doing_now).with(@viewed_user).and_return(stuff)
     get_index
     assigns[:doing_now].should have(5).things
   end
@@ -86,7 +89,7 @@ describe StuffToDoController, '#index for another user as an administrator' do
   it 'should set @recommended to the next 10 issues for the current user' do
     stuff = []
     10.times { stuff << mock('stuff') }
-    NextIssue.should_receive(:recommended).with(@viewed_user).and_return(stuff)
+    StuffToDo.should_receive(:recommended).with(@viewed_user).and_return(stuff)
     get_index
     assigns[:recommended].should have(10).things
   end
@@ -94,7 +97,7 @@ describe StuffToDoController, '#index for another user as an administrator' do
   it 'should set @available to the assigned issues that are not next issues for the current user' do
     stuff = []
     6.times { stuff << mock('stuff') }
-    NextIssue.should_receive(:available).with(@viewed_user, { :user => @viewed_user }).and_return(stuff)
+    StuffToDo.should_receive(:available).with(@viewed_user, { :user => @viewed_user }).and_return(stuff)
     get_index
     assigns[:available].should have(6).things
   end
@@ -107,7 +110,7 @@ describe StuffToDoController, '#index for another user as a user' do
   end
   
   before(:each) do
-    @current_user = mock_model(User, :admin? => false, :logged? => true)
+    @current_user = mock_model(User, :admin? => false, :logged? => true, :language => :en)
     User.stub!(:current).and_return(@current_user)
     @viewed_user = mock_model(User)
   end
@@ -122,11 +125,7 @@ describe StuffToDoController, '#index for another user as a user' do
     response.code.should eql("403")
   end
   
-  it 'should display the standard unauthorized page' do
-    get_index
-    response.should render_template('common/403')
-  end
-
+  it 'should display the standard unauthorized page'
 end
 
 describe StuffToDoController, '#index with an unauthenticated user' do
@@ -140,21 +139,17 @@ describe StuffToDoController, '#index with an unauthenticated user' do
     response.code.should eql("403")
   end
   
-  it 'should display the standard unauthorized page' do
-    get :index
-    response.should render_template('common/403')
-  end
-
+  it 'should display the standard unauthorized page'
 end
 
 
 describe StuffToDoController, '#reorder' do
   def post_reorder
-    post :reorder, :issue => @ordered_list
+    post :reorder, :stuff => @ordered_list
   end
   
   before(:each) do
-    @current_user = mock_model(User, :admin? => false, :logged? => true)
+    @current_user = mock_model(User, :admin? => false, :logged? => true, :language => :en)
     User.stub!(:current).and_return(@current_user)
     @ordered_list = ["500", "100", "300"]
   end
@@ -170,7 +165,7 @@ describe StuffToDoController, '#reorder' do
   end
   
   it 'should reorder the Next Issues' do
-    NextIssue.should_receive(:reorder_list).with(@current_user, @ordered_list)
+    StuffToDo.should_receive(:reorder_list).with(@current_user, @ordered_list)
     post_reorder
   end
 end
@@ -178,15 +173,15 @@ end
 # These intregrate the partial view
 describe StuffToDoController, '#reorder with the js format' do
   def post_reorder
-    post :reorder, :issue => @ordered_list, :format => 'js'
+    post :reorder, :stuff => @ordered_list, :format => 'js'
   end
   
   before(:each) do
-    @current_user = mock_model(User, :admin? => false, :logged? => true)
+    @current_user = mock_model(User, :admin? => false, :logged? => true, :language => :en)
     User.stub!(:current).and_return(@current_user)
     @ordered_list = ["500", "100", "300"]
-    NextIssue.stub!(:doing_now).and_return([])
-    NextIssue.stub!(:recommended).and_return([])
+    StuffToDo.stub!(:doing_now).and_return([])
+    StuffToDo.stub!(:recommended).and_return([])
   end
   
   it 'should be successful' do
@@ -200,7 +195,7 @@ describe StuffToDoController, '#reorder with the js format' do
   end
   
   it 'should reorder the Next Issues' do
-    NextIssue.should_receive(:reorder_list).with(@current_user, @ordered_list)
+    StuffToDo.should_receive(:reorder_list).with(@current_user, @ordered_list)
     post_reorder
   end
   
@@ -217,12 +212,13 @@ end
 
 describe StuffToDoController, '#reorder for another user as an administrator' do
   def post_reorder
-    post :reorder, :issue => @ordered_list, :user_id => @viewed_user.id
+    post :reorder, :stuff => @ordered_list, :user_id => @viewed_user.id
   end
   
   before(:each) do
-    @current_user = mock_model(User, :admin? => true, :logged? => true)
+    @current_user = mock_model(User, :admin? => true, :logged? => true, :language => :en)
     User.stub!(:current).and_return(@current_user)
+    controller.stub!(:find_current_user).and_return(@current_user)
     @viewed_user = mock_model(User)
     User.stub!(:find).with(@viewed_user.id.to_s).and_return(@viewed_user)
     @ordered_list = ["500", "100", "300"]
@@ -239,7 +235,7 @@ describe StuffToDoController, '#reorder for another user as an administrator' do
   end
   
   it 'should reorder the Next Issues' do
-    NextIssue.should_receive(:reorder_list).with(@viewed_user, @ordered_list)
+    StuffToDo.should_receive(:reorder_list).with(@viewed_user, @ordered_list)
     post_reorder
   end
 end
@@ -247,17 +243,18 @@ end
 # These intregrate the partial view
 describe StuffToDoController, '#reorder for another user as an administrator with the js format' do
   def post_reorder
-    post :reorder, :issue => @ordered_list, :user_id => @viewed_user.id, :format => 'js'
+    post :reorder, :stuff => @ordered_list, :user_id => @viewed_user.id, :format => 'js'
   end
   
   before(:each) do
-    @current_user = mock_model(User, :admin? => true, :logged? => true)
+    @current_user = mock_model(User, :admin? => true, :logged? => true, :language => :en)
     User.stub!(:current).and_return(@current_user)
+    controller.stub!(:find_current_user).and_return(@current_user)
     @viewed_user = mock_model(User)
     User.stub!(:find).with(@viewed_user.id.to_s).and_return(@viewed_user)
     @ordered_list = ["500", "100", "300"]
-    NextIssue.stub!(:doing_now).and_return([])
-    NextIssue.stub!(:recommended).and_return([])
+    StuffToDo.stub!(:doing_now).and_return([])
+    StuffToDo.stub!(:recommended).and_return([])
   end
   
   it 'should be successful' do
@@ -271,7 +268,7 @@ describe StuffToDoController, '#reorder for another user as an administrator wit
   end
   
   it 'should reorder the Next Issues' do
-    NextIssue.should_receive(:reorder_list).with(@viewed_user, @ordered_list)
+    StuffToDo.should_receive(:reorder_list).with(@viewed_user, @ordered_list)
     post_reorder
   end
   
@@ -292,7 +289,7 @@ describe StuffToDoController, '#reorder for another user as a user' do
   end
   
   before(:each) do
-    @current_user = mock_model(User, :admin? => false, :logged? => true)
+    @current_user = mock_model(User, :admin? => false, :logged? => true, :language => :en)
     User.stub!(:current).and_return(@current_user)
     @viewed_user = mock_model(User)
   end
@@ -307,11 +304,7 @@ describe StuffToDoController, '#reorder for another user as a user' do
     response.code.should eql("403")
   end
   
-  it 'should display the standard unauthorized page' do
-    post_reorder
-    response.should render_template('common/403')
-  end
-
+  it 'should display the standard unauthorized page'
 end
 
 describe StuffToDoController, '#reorder with an unauthenticated user' do
@@ -325,16 +318,12 @@ describe StuffToDoController, '#reorder with an unauthenticated user' do
     response.code.should eql("403")
   end
   
-  it 'should display the standard unauthorized page' do
-    post :reorder
-    response.should render_template('common/403')
-  end
-
+  it 'should display the standard unauthorized page'
 end
 
 describe StuffToDoController, '#filters_for_view (private)' do
-  it 'should return a NextIssueFilter' do
-    controller.send(:filters_for_view).should be_an_instance_of(NextIssueFilter)
+  it 'should return a StuffToDoFilter' do
+    controller.send(:filters_for_view).should be_an_instance_of(StuffToDoFilter)
   end
 
   it 'should include all the Users in users' do
@@ -352,7 +341,7 @@ describe StuffToDoController, '#filters_for_view (private)' do
     @priority1 = mock_model(Enumeration)
     @priority2 = mock_model(Enumeration)
     priorities = [@priority1, @priority2]
-    Enumeration.should_receive(:get_values).with('IPRI').and_return(priorities)
+    Enumeration.should_receive(:priorities).and_return(priorities)
 
     filters = controller.send(:filters_for_view)
     filters.priorities.should include(@priority1)

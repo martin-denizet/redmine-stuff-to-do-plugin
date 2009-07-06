@@ -1,6 +1,9 @@
 # Sets up the Rails environment for Cucumber
 ENV["RAILS_ENV"] = "test"
-require File.expand_path(File.dirname(__FILE__) + '/../../../../../config/environment')
+
+# Allows loading of an environment config based on the environment
+redmine_root = ENV["REDMINE_ROOT"] || File.dirname(__FILE__) + "/../../../../.."
+require File.expand_path(redmine_root + "/config/environment")
 require 'cucumber/rails/world'
 Cucumber::Rails.use_transactional_fixtures
 
@@ -11,6 +14,11 @@ require 'cucumber/rails/rspec'
 require 'webrat/rspec-rails'
 
 require 'ruby-debug'
+
+# Machinist and it's data
+require 'faker'
+require 'machinist'
+require File.expand_path(File.dirname(__FILE__) + '/../../blueprints/blueprint')
 
 # require the entire app if we're running under coverage testing,
 # so we measure 0% covered files in the report

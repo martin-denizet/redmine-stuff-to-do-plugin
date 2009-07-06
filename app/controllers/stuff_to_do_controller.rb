@@ -6,19 +6,19 @@ class StuffToDoController < ApplicationController
   helper :stuff_to_do
   
   def index
-    @doing_now = NextIssue.doing_now(@user)
-    @recommended = NextIssue.recommended(@user)
-    @available = NextIssue.available(@user, :user => @user )
+    @doing_now = StuffToDo.doing_now(@user)
+    @recommended = StuffToDo.recommended(@user)
+    @available = StuffToDo.available(@user, default_filters )
     
     @users = User.active
     @filters = filters_for_view
   end
   
   def reorder
-    NextIssue.reorder_list(@user, params[:issue])
-    @doing_now = NextIssue.doing_now(@user)
-    @recommended = NextIssue.recommended(@user)
-    @available = NextIssue.available(@user, get_filters )
+    StuffToDo.reorder_list(@user, params[:stuff])
+    @doing_now = StuffToDo.doing_now(@user)
+    @recommended = StuffToDo.recommended(@user)
+    @available = StuffToDo.available(@user, get_filters )
 
     respond_to do |format|
       format.html { redirect_to :action => 'index'}
@@ -27,7 +27,7 @@ class StuffToDoController < ApplicationController
   end
   
   def available_issues
-    @available = NextIssue.available(@user, get_filters)
+    @available = StuffToDo.available(@user, get_filters)
 
     respond_to do |format|
       format.html { redirect_to :action => 'index'}
@@ -52,11 +52,11 @@ class StuffToDoController < ApplicationController
   end
   
   def filters_for_view
-    NextIssueFilter.new
+    StuffToDoFilter.new
   end
   
   def get_filters
-    return { :user => @user } unless params[:filter]
+    return default_filters unless params[:filter]
 
     id = params[:filter].split('-')[-1]
 
@@ -66,8 +66,21 @@ class StuffToDoController < ApplicationController
       return { :priority => Enumeration.find_by_id(id) }
     elsif params[:filter].match(/statuses/)
       return { :status => IssueStatus.find_by_id(id) }
+    elsif params[:filter].match(/projects/)
+      return { :projects => true }
     else
       return nil
+    end
+  end
+
+  def default_filters
+    if StuffToDo.using_issues_as_items?
+      return { :user => @user }
+    elsif StuffToDo.using_projects_as_items?
+      return { :projects => true }
+    else
+      # Edge case
+      return { }
     end
   end
 end
