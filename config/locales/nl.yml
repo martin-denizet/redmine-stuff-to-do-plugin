@@ -1,16 +1,19 @@
 nl:
-  stuff_to_do_title: Takenlijst
-  stuff_to_do_what_im_doing_now: "Wat ik nu aan het doen ben"
-  stuff_to_do_what_is_recommended: "Wat ik straks doe"
-  stuff_to_do_what_is_available: "Wat is beschikbaar"
-  stuff_to_do_text_order_im_doing_it: "In de volgorde waarin ik het doe"
+  stuff_to_do_title: Stuff To Do
+  stuff_to_do_what_im_doing_now: "Wat ik nu doe"
+  stuff_to_do_what_is_recommended: "Aangeraden items"
+  stuff_to_do_what_is_available: "Beschikbare items"
+  stuff_to_do_text_order_im_doing_it: "Op volgorde van verwerken"
   stuff_to_do_text_by_project_manager: Door de projectmanager
-  stuff_to_do_label_view_user_list: "Bekijk de lijst van een andere user:"
+  stuff_to_do_label_view_user_list: "Bekijk een andere gebruikers lijst:"
   stuff_to_do_text_total_progress: "Totale voortgang"
-  stuff_to_do_text_total_estimates: "Totale inschattingen"
+  stuff_to_do_text_total_estimates: "Totale schatting"
   stuff_to_do_label_project_manager_emails: Project Manager Emails
-  stuff_to_do_label_threshold: Drempel
-  stuff_to_do_label_email_to: Email addressen
-  stuff_to_do_text_settings: "Er wordt een email verzonden naar de projectmanager wanneer een gebruikers takenlijst kleiner wordt dan de drempel. U kan meerdere adressen opgeven, gescheiden door komma's."
+  stuff_to_do_label_threshold: Grens
+  stuff_to_do_label_email_to: Emailaddressen
+  stuff_to_do_text_settings: "Er wordt een email gestuurd naar de projectmanager zodra een gebruikers aanbevolen items een bepaalde grens overschrijdt. Meerdere ontvangers kunnen worden gescheiden met komma's."
   stuff_to_do_label_filter: Filter
   stuff_to_do_label_filter_by: Filter op ...
+  stuff_to_do_drag_issue_create_list: Sleep issues hier heen om een nieuwe lijst te maken.
+  stuff_to_do_drag_issue_remove_list: Sleep issues hier heen om ze van een lijst te verwijderen.
+  stuff_to_do_use_as_stuff_to_do: Gebruik als Stuff To Do items

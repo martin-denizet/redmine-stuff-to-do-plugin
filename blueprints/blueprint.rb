@@ -9,9 +9,11 @@ Sham.identifier { Faker::Internet.domain_word.downcase }
 Sham.message { Faker::Company.bs }
 Sham.position {|index| index }
 Sham.single_name { Faker::Internet.domain_word.capitalize }
+Sham.integer(:unique => false) { rand(100) }
 
 Sham.permissions(:unique => false) {
   [
+   :view_issues
   ]
 }
 
@@ -26,7 +28,7 @@ end
 Project.blueprint do
   name { Sham.project_name }
   identifier
-  enabled_modules
+  enabled_modules { Sham.enabled_modules }
 end
 
 def make_project_with_enabled_modules(attributes = {})
@@ -45,7 +47,6 @@ end
 Member.blueprint do
   project
   user
-  role
 end
 
 Role.blueprint do
@@ -54,9 +55,28 @@ Role.blueprint do
   permissions
 end
 
+MemberRole.blueprint do
+  role { Role.make }
+end
+
+# Stupid circular validations
+def make_member(attributes, roles)
+  member = Member.new(attributes)
+  member.roles << roles
+  member.save!
+end
+
 Enumeration.blueprint do
   name { Sham.single_name }
   opt { 'IPRI' }
+end
+
+IssuePriority.blueprint do
+  name { Sham.single_name }
+end
+
+TimeEntryActivity.blueprint do
+  name { Sham.single_name }
 end
 
 IssueStatus.blueprint do
@@ -81,9 +101,18 @@ Issue.blueprint do
   subject { Sham.message }
   tracker { Tracker.make }
   description { Shame.message }
-  priority { Enumeration.make(:opt => 'IPRI') }
+  priority { IssuePriority.make }
   status { IssueStatus.make }
   author { User.make }
+end
+
+TimeEntry.blueprint do
+  issue
+  project { issue.project }
+  user
+  hours { Sham.integer }
+  activity { TimeEntryActivity.make }
+  spent_on { Date.today }
 end
 
 # Plugin specific
