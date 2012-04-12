@@ -16,7 +16,7 @@ div.menu { float:right; text-align: right; }
 
 div.issue-details, div.project-details { position:relative; display:inline; float:left; width:71%; margin: 0 .5%; }
 div.estimate { position:relative; float:left; display: inline; width: 6%; margin: 0; text-align: center; }
-div.progress { position:relative; float:left; display:inline; width: 17%; margin: 0 0 0 .5%; }
+div.issue-info { position:relative; float:left; display:inline; width: 26%; margin: 0 0 0 .5%; font-size: smaller; }
 
 div.pane-summary { text-align: right; }
 div.pane-summary p { font-size: 80% }

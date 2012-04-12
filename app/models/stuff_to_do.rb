@@ -54,9 +54,9 @@ class StuffToDo < ActiveRecord::Base
       potential_stuff_to_do = active_and_visible_projects.sort
     else
       potential_stuff_to_do = Issue.find(:all,
-                                         :include => [:status, :priority, :project],
+                                         :include => [:status, :priority, :project, :tracker],
                                          :conditions => conditions_for_available(filter),
-                                         :order => "#{Issue.table_name}.created_on DESC")
+                                         :order => "projects.name, trackers.name, issues.id DESC")
     end
 
     stuff_to_do = StuffToDo.find(:all, :conditions => { :user_id => user.id }).collect(&:stuff)
